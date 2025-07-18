@@ -15,3 +15,16 @@
 
 - **[2025-06-26]** Our paper is accepted by ICCV 2025! 🎉 We will release code in this repo.
 
+
+### 📝 Citation
+
+If you find this paper useful for your research, please consider citing:
+
+```
+@inproceedings{mou2025dimo,
+  title={DIMO: Diverse 3D Motion Generation for Arbitrary Objects},
+  author={Mou, Linzhan and Lei, Jiahui and Wang, Chen and Liu, Lingjie and Daniilidis, Kostas},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  year={2025}
+}
+```
