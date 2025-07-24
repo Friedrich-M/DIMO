@@ -13,7 +13,8 @@
 
 ### 📜 News
 
-- **[2025-06-26]** Our paper is accepted by ICCV 2025! 🎉 We will release code in this repo.
+- **[2025-07-24]** DIMO is selected as Highlight Paper!
+- **[2025-06-26]** DIMO is accepted by ICCV 2025! 🎉 We will release code in this repo.
 
 
 ### 📝 Citation
