@@ -1,4 +1,4 @@
-## DIMO: Diverse 3D Motion Generation for Arbitrary Objects
+# DIMO: Diverse 3D Motion Generation for Arbitrary Objects
 
 ### [Paper](https://drive.google.com/file/d/1OLg6frLoSHVi1b9vrG6azwlVSc3UngYE/view) | [Page](https://linzhanm.github.io/dimo/) | [Demo](https://youtu.be/CY2jTIpEN-I) 
 
