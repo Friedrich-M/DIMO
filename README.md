@@ -77,6 +77,8 @@ https://github.com/user-attachments/assets/e55f2b58-7502-4276-b2c1-ea856d972899
 
 - **NOTE:** Since the video models we use for motion prior distillation were not perfect at that time, the generated videos may contain artifacts. We will update the code and models with more advanced video models like Veo3 and SV4D2.0 in the future. 
 
+If you have any question, please feel free to open an issue or e-mail at  `linzhan@princeton.edu`.
+
 ### 🚦 Applications
 
 With the learned motion latent space, we provide scripts to test the following applications. Simply add the corresponding flags in `run_test_motion.sh` and run it. We also provide some visualization results below. More instructions will be added soon.
