@@ -52,6 +52,7 @@ Intuition: jointly model diverse 3D motions in a shared latent space. To train D
 sh run_train_latent.sh
 ```
 - **NOTE:** You can modify the hyperparameters in `run_train_latent.sh` as needed. Check `configs/train_config.yaml` to view all configurable parameters and default settings
+- **Latent Code:** Set the `vae_latent` flag to `True` to enforce a Gaussian distribution on the motion latent code, which also enables KL divergence loss during training.
 
 ### ✨ Testing
 
