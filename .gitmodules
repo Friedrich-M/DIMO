@@ -1,0 +1,12 @@
+[submodule "diff-gauss"]
+    path = submodules/diff-gauss
+    url = https://github.com/slothfulxtx/diff-gaussian-rasterization.git
+[submodule "diff-gaussian-rasterization"]
+    path = submodules/diff-gaussian-rasterization
+    url = https://github.com/ashawkey/diff-gaussian-rasterization
+[submodule "KNN_CUDA"]
+    path = submodules/KNN_CUDA
+    url = https://github.com/unlimblue/KNN_CUDA.git
+[submodule "simple-knn"]
+    path = submodules/simple-knn
+    url = https://github.com/camenduru/simple-knn

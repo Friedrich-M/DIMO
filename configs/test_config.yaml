@@ -1,0 +1,131 @@
+### Input
+# input reference video frames path 
+input_folder: 
+input_videos: 
+# estimated elevation angle for input frames
+elevation: 0
+# reference image resolution
+ref_size: 576
+
+### Output
+save_path: 
+save_path_new: 
+
+### Training
+# training or testing
+train_dynamic: False
+# vae latent code
+vae_latent: False
+# training iterations
+iters_s1: 1500
+iters_s2: 5000
+iters_s3: 0
+# training batch size per iter
+batch_size: 4
+# training camera radius
+radius: 2
+# training camera fovy
+fovy: 33.9 # align with sv4d (https://github.com/Stability-AI/generative-models/issues/393)
+# prob to invert background color during training (0 = always black, 1 = always white)
+invert_bg_prob: 0.5
+# seed 
+seed: 0
+# vis resolution
+H: 800
+W: 800
+num_frames: 21
+num_views: 9
+# latent code dim
+latent_code_dim: 32
+# FPS
+FPS_iter: 1000
+# rgb loss
+lambda_mse: 5000.0
+lambda_lpips: 1000.0
+lambda_ssim: 500.0
+# mask loss
+lambda_mask: 500.0
+# depth loss
+add_depth: True
+depth_reg_start_iter: 200
+lambda_smooth: 100.0
+# normal loss
+add_normal: True
+normal_reg_start_iter: 200
+lambda_bilateral: 0.05
+# ga loss
+add_ga: True
+ga_chamfer: True
+lambda_ga1: 10.0
+lambda_ga2: 10000.0
+# arap loss
+use_arap: True
+arap_start_iter_s1: 1000
+arap_end_iter_s2: 2000
+lambda_arap: 10.0
+# kl divergence loss
+lambda_kl: 0.05
+# continue training
+load_stage: ""
+# scheduler
+save_inter: 500
+
+### Gaussian splatting parameters
+num_pts: 100000
+num_cpts: 512
+sh_degree: 0
+opacity_lr: 0.05
+scaling_lr: 0.005
+percent_dense: 0.01
+density_start_iter: 100
+density_end_iter: 1000
+density_end_iter_s2: 5000
+densification_interval: 100
+densification_interval_s2: 1000
+opacity_reset_interval: 200000
+densify_grad_threshold: 0.01
+densify_opacity_threshold_s1: 0.01
+densify_opacity_threshold_s2: 0.01
+
+position_lr_init: 0.01
+position_lr_final: 0.0002
+position_lr_delay_mult: 0.02
+position_lr_max_steps: 1000
+feature_lr: 0.01
+rotation_lr: 0.005
+c_radius_lr: 0.005
+#### learnable latent code learning rate ####
+latent_code_lr_init: 0.005
+latent_code_lr_final: 0.0002
+latent_code_lr_delay_mult: 0.02
+latent_code_lr_max_steps: 1000
+#############################################
+deform_lr_init: 0.0002
+deform_lr_final: 0.000002
+deform_learn_start: 0
+deformation_lr_delay_mult: 0.01
+c_position_lr_init: 0.000002
+c_position_lr_final: 0.000002
+c_position_lr_delay_mult: 0.02
+r_lr: 0.01
+
+init_type: ag
+init_ratio: 1
+
+### Inference
+test_step: 
+test_stage: s2
+test_azi: 0
+do_inference: False
+check_inter: 100
+video_save_dir: test_video
+render_type: fixed
+test_motion: False
+test_motion_data: 
+test_language: False
+test_interpolation: False
+test_paper: False
+test_text_prompt:
+test_unaligned_motion: False
+test_unaligned_motion_data:
+render_videos:
