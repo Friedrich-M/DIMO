@@ -69,15 +69,15 @@ sh run_test_motion.sh
 
 The rendered key point trajectories will look like this (Trump is walking):
 
-https://github.com/user-attachments/assets/957ca728-2fd5-4725-8005-67b85d5b735f
+https://github.com/user-attachments/assets/6b51b897-ed89-470a-b5e9-b6cb01ccecf0
 
 The 4d rendering results should look like this (reference, fixed view, orbit views):
 
-https://github.com/user-attachments/assets/e55f2b58-7502-4276-b2c1-ea856d972899
+https://github.com/user-attachments/assets/b7a5c7fd-4d35-4d66-b284-092398f6a29c
 
 - **NOTE:** Since the video models we use for motion prior distillation were not perfect at that time, the generated videos may contain artifacts. We will update the code and models with more advanced video models like Veo3 and SV4D2.0 in the future. 
 
-If you have any question, please feel free to open an issue or e-mail at  `linzhan@princeton.edu`.
+If you have any questions, please feel free to open an issue or email at  `linzhan@princeton.edu`.
 
 ### 🚦 Applications
 
@@ -87,20 +87,19 @@ With the learned motion latent space, we provide scripts to test the following a
 
 Add `test_interpolation=True` in `run_test_motion.sh`
 
-https://github.com/user-attachments/assets/3219d09b-5402-442a-8d92-4fbad8cf7322
+https://github.com/user-attachments/assets/1d2d1173-cfbd-420d-96fb-eb806ab62c33
 
 - Language-Guided Motion Generation
 
 Add `test_language=True` in `run_test_motion.sh`
 
-https://github.com/user-attachments/assets/b1b2e8fa-7d8f-42f7-bbe8-0775d1c1a0d5
+https://github.com/user-attachments/assets/9cbadd77-2b39-48b9-b73d-4d71fcf5b2fb
 
 - Test Motion Reconstruction
 
 Add `test_motion=True` in `run_test_motion.sh`
 
-https://github.com/user-attachments/assets/c2db7b84-8911-442d-9ec3-1b67803be26c
-
+https://github.com/user-attachments/assets/e2e3c1aa-a47b-4cee-8301-12ae9be804eb
 
 ### 🌸 Acknowledgement
 Our code is built on top of [DreamGaussian](https://github.com/dreamgaussian/dreamgaussian), [CogVideoX](https://github.com/zai-org/CogVideo), [SV4D](https://github.com/Stability-AI/generative-models). Many thanks to the authors for sharing their code. We also greatly appreciate the help from [Yiming Xie](https://ymingxie.github.io/).
