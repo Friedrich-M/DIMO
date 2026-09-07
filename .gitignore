@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Data, checkpoints and renderings
+data/
+ckpts/
+outputs/
+vis/
+*.pth
+*.ply
+*.mp4
+*.tar.gz
+*_mask.npy
+
+# Tooling
+.vscode/
+.idea/
+.DS_Store
+
+# Runtime artefacts
+logs/
+data_generation/work/
+
+# Cluster job scripts (site-specific, kept out of the repo)
+*.sbatch
+*.slurm
+
+# Upstream repos consulted while building this pipeline (Wan2.2, CogVideoX, SV4D, and
+# the pre-release scripts). Cloned locally, never redistributed here.
+references/

@@ -1,0 +1,155 @@
+# Data generation for DIMO. Override any key on the command line as `section.key=value`.
+
+workdir: work                 # every intermediate result lives in <workdir>/<object.name>/
+seed: 0
+device: cuda
+force: False                  # redo stages whose outputs already exist
+motions:                      # comma-separated subset of motion names to process (all by default)
+dataset_dir:                  # caption_dataset.py only: an existing dataset to write captions.json for
+
+# ----------------------------------------------------------------------------- object
+object:
+  name:                       # e.g. trump; used as folder name
+  image:                      # reference image (RGBA, or RGB -> background removed with rembg)
+  image_ratio: 0.8            # fraction of the square canvas occupied by the object
+  object_centered: True       # centre the canvas on the object (else on the image centre)
+  remove_bg: True
+
+# ----------------------------------------------------------------------------- vision-language model
+# Vision-language model for captions (stage 1) and the quality judge (stage 3). Three setups, all
+# through the same client, which negotiates the sampling parameters with the endpoint (see
+# datagen/llm.py) so none of them needs a different config shape:
+#   OpenAI API      backend=openai  model=gpt-5              base_url=null                    (default)
+#   served Qwen3.5  backend=openai  model=Qwen/Qwen3.5-9B    base_url=http://localhost:8000/v1
+#   in-process Qwen backend=local   model=Qwen/Qwen3.5-9B
+# Run `python check_llm.py` to confirm a setup before launching a long job.
+llm:
+  backend: openai
+  model: gpt-5
+  base_url: null              # set to a vLLM/transformers-serve endpoint to use a local model
+  api_key_env: OPENAI_API_KEY
+  temperature: 0.7            # Qwen3.5's non-thinking recommendation; GPT-5 allows only 1 and ignores this
+  top_p: 0.8                  # likewise Qwen-only (GPT-5 rejects top_p, so the client drops it)
+  max_tokens: 8192            # for GPT-5 this budget also pays for hidden reasoning tokens
+  reasoning_effort: low       # GPT-5 family only: 'minimal' skips reasoning, 'high' costs more
+  disable_thinking: True      # Qwen3.5 reasons by default; answers are short structured JSON so it is off
+  retries: 3
+
+# ----------------------------------------------------------------------------- stage 1: captions
+captions:
+  num_motions: 50             # motion captions to collect (paper: >= 50 per object)
+  per_request: 20             # captions per LLM request; previously generated motions are excluded
+  max_rounds: 10
+  # Sampling temperature for the caption requests. GPT-5 accepts only 1 and the client drops this,
+  # which is why the prompt, not the temperature, carries the diversity (see the README).
+  temperature: 1.0
+  template:                   # seed caption; built from the object description when empty
+  cluster_to:                 # e.g. 60: over-generate then keep the k-means representatives in BERT space
+
+# ----------------------------------------------------------------------------- stage 2: monocular videos
+video:
+  backend: wan                # wan (Wan2.2 TI2V-5B) | cogvideox (CogVideoX-5B-I2V, as in the paper)
+
+# Wan2.2 TI2V-5B: 121 frames at 24 fps (~5 s) and 1280x704, on a 24 GB GPU.
+wan:
+  repo: ../references/Wan2.2  # Wan2.2 checkout (its generate.py is used)
+  python: python              # interpreter of the Wan2.2 environment
+  ckpt_dir:                   # e.g. /models/Wan2.2-TI2V-5B (hf download Wan-AI/Wan2.2-TI2V-5B --local-dir ...)
+  size: 1280*704              # 1280*704 (landscape) or 704*1280 (portrait)
+  sample_steps:               # model default (50)
+  sample_guide_scale:         # model default (5.0)
+  sample_shift:               # model default (5.0)
+  frame_num:                  # model default (121); must be 4n+1
+  offload_model: True
+  convert_model_dtype: True
+  t5_cpu: True
+  seed: 42
+  extra_args: ""              # appended verbatim to generate.py
+
+# CogVideoX-5B-I2V: 49 frames at 8 fps and 480x720, the model used for the paper's data.
+# Weights are downloaded from the Hub on first use (~20 GB); no repo checkout is needed.
+cogvideox:
+  python: python              # interpreter with diffusers + transformers (the `dimo` env works)
+  model: zai-org/CogVideoX-5b-I2V
+  num_frames: 49              # must be 8n+1
+  fps: 8
+  steps: 50
+  guidance_scale: 6.0
+  dtype: bfloat16
+  offload: False              # sequential CPU offload + VAE tiling, for GPUs under ~24 GB
+  seed: 42
+  extra_args: ""
+
+# ----------------------------------------------------------------------------- stage 3: clips and filtering
+clips:
+  # Frames per motion, used by SV4D and DIMO alike. SV4D 2.0 is autoregressive, so longer sequences
+  # work: `sv4d2_8views` and `sv4d` need 4k+1 (5, 9, ..., 21, 25, 41, ...), `sv4d2` any value >= 12.
+  # Stage-4 cost and VRAM grow roughly linearly with this.
+  #
+  # The count must also divide the generated clip evenly, or the frames end up unevenly spaced in
+  # time while DIMO still treats them as uniform (stage 3 warns when that happens). Match the count
+  # to the backend:
+  #   video.backend=wan        121 frames -> 41  (every 3rd frame: 8 fps, the whole 5 s clip)
+  #   video.backend=cogvideox   49 frames -> 25  (every 2nd frame: 4 fps, the whole 6 s clip)
+  # Other evenly spaced options: wan 21, 25, 61, 121; cogvideox 13, 17, 49.
+  num_frames: 41
+  frame_start: 0
+  # How `num_frames` are taken from the generated clip: empty spreads them uniformly over the whole
+  # clip (41 from Wan's 121 is every 3rd frame); set e.g. 2 to keep a shorter, denser window from
+  # `frame_start`.
+  frame_stride:
+  image_ratio: 0.9            # object extent within the square crop (union over all frames)
+  size: 576                   # SV4D resolution
+filter:
+  # Motion amplitude = mean of the largest 20% optical-flow magnitudes inside the object mask, in pixels
+  # at `clips.size`, measured between *consecutive kept frames*. It therefore scales with the effective
+  # frame rate: the default 41-frames-from-121 keeps every 3rd frame, i.e. 8 fps, which is the rate the
+  # released data was sampled at, so these thresholds are directly comparable to it (over the 51 released
+  # motions: min 0.5, median 5.2, max 23.5). Halve the frame count and the scores roughly double.
+  # Thresholds are object dependent: `filter_videos.py` prints your clips' percentiles so you can tune them.
+  min_motion: 0.5
+  max_motion: 35.0
+  judge: none                 # none | vlm  (rate visual quality / consistency / prompt alignment with the LLM)
+  min_score: 3                # minimum judge score (1-5) on every criterion
+
+# ----------------------------------------------------------------------------- stage 4: multi-view videos (SV4D)
+sv4d:
+  repo: ../references/generative-models   # Stability generative-models checkout
+  python: python              # interpreter of the generative-models environment
+  checkpoints_dir: ../ckpts/sv4d   # holds sv4d2_8views.safetensors / sv4d2.safetensors (SV4D 2.0),
+                                   # or sv4d.safetensors + sv3d_u.safetensors (SV4D 1.0)
+  # sv4d2_8views (2.0, 8 novel views -> 9 views, the layout DIMO trains on; no SV3D needed)
+  # sv4d2        (2.0, 4 novel views -> 5 views; train DIMO with num_views=5)
+  # sv4d         (1.0, 8 novel views; also needs an SV3D checkpoint for the reference orbit)
+  model: sv4d2_8views
+  sv3d_version: sv3d_u        # SV4D 1.0 only: sv3d_u or sv3d_p
+  num_steps: 20               # 20 as in the paper's data; 50 for higher quality
+  img_size: 576
+  elevation: 0
+  seed: 23
+  encoding_t: 8               # lower these if you run out of VRAM
+  decoding_t: 8
+
+# ----------------------------------------------------------------------------- stage 5: DIMO dataset
+dataset:
+  output_dir: ../data         # -> <output_dir>/<name>/ (DIMO's input_folder)
+  name:                       # dataset folder name; defaults to object.name
+  compute_masks: True         # precompute FF_mask.npy so that training works offline
+  # How those masks are computed. Must match `mask_method` in the DIMO config, or a frame whose
+  # mask is missing would be filled in differently at training time.
+  #   rembg     the u2net matting network (~0.2 s per frame)
+  #   white_bg  distance to white, ~30x faster and exact for these renders
+  mask_method: rembg
+  symlink: False              # link the multi-view folders instead of copying
+
+# ----------------------------------------------------------------------------- stage 6: text projector (optional)
+projector:
+  checkpoint_dir:             # DIMO checkpoint folder with latent_codes.pth (e.g. ../outputs/<object>/s2)
+  step:                       # use latent_codes_<step>.pth instead of the final ones
+  output:                     # defaults to <checkpoint_dir>/mlp_encoder.pth
+  iters: 5000
+  lr: 0.001
+  noise_std: 0.001
+  hidden_size: 128
+  num_layers: 1
+  bert_cache_dir:

@@ -1,0 +1,6 @@
+# Extra packages for the data-generation stages that run in the `dimo` environment (stages 1, 3, 5, 6).
+# Wan2.2 and SV4D run in their own environments (see README.md).
+openai>=1.45
+# already in the dimo environment: torch, torchvision (RAFT), transformers (BERT), rembg, imageio, pillow, omegaconf
+# The SV4D and Wan2.2 runners have their own dependencies (fire, einops, ...) installed into their
+# own environments by scripts/setup_envs.sh; they are deliberately not listed here.

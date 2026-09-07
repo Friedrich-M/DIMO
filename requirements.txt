@@ -1,30 +1,28 @@
-numpy==1.23.5 
-diffusers==0.21.4
-transformers==4.33.0 
-tensorboardX
-lpips
-onnxruntime
-rembg
-mediapy
-scenepic
-easydict
+# Tested with Python 3.10, PyTorch 2.1.1 (CUDA 11.8) and pytorch3d 0.7.5, which are installed
+# separately (see README.md). The CUDA rasterizers are built from submodules/.
 
-tqdm
-rich
-ninja
-pandas
-scipy
-scikit-learn
+# torch 2.1.1 was built against NumPy 1.x and breaks with NumPy 2.
+numpy>=1.23.5,<2
+# opencv-python >= 4.12 requires NumPy 2.
+opencv-python<4.12
+# rembg >= 2.0.70 requires Python 3.11 and NumPy >= 2.3; recent versions no longer pull in
+# onnxruntime themselves, so it is listed explicitly.
+rembg<2.0.70
+onnxruntime
+Pillow
 matplotlib
-opencv-python
 imageio
 imageio-ffmpeg
-omegaconf
-einops
 plyfile
-pygltflib
-huggingface_hub
-accelerate
-open3d
-chamferdist
-mediapipe
+omegaconf
+tensorboardX
+lpips
+tqdm
+# BERT sentence embeddings for language-guided generation.
+transformers==4.33.0
+# Build tooling for the CUDA extensions in submodules/. torch 2.1.1's extension builder still
+# imports pkg_resources, which setuptools >= 70 no longer provides.
+setuptools<70
+ninja
+# Optional: interactive 3D trajectory pages (save_traj_html=True).
+scenepic
