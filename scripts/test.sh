@@ -3,9 +3,9 @@
 #   bash scripts/test.sh                                   # render 11-walk (edit render_videos below)
 #   bash scripts/test.sh render render_videos=null         # render all motions (slow)
 #   bash scripts/test.sh interpolation
-#   bash scripts/test.sh language test_text_prompt="Trump is walking" text_encoder_ckpt=<projector.pth>
-#       (the language mode needs a text -> latent projector; the released checkpoint has none, so
-#        train one first with data_generation/train_text_projector.py -- see README.md)
+#   bash scripts/test.sh language test_text_prompt="Trump is walking"
+#       (needs a text -> latent projector at <save_path>/s2/mlp_encoder.pth; the released checkpoint
+#        has none, so train one first with data_generation/train_text_projector.py -- see README.md)
 #   bash scripts/test.sh fit_motion test_motion_data=data/new_motion
 set -euo pipefail
 export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}

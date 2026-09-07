@@ -123,7 +123,9 @@ save_traj_html: False      # interactive 3D trajectory page (needs scenepic)
 interp_videos: [04-032041, 11-raise]   # interpolation: the two motions to blend
 interp_alpha: [0.0, 0.5, 1.0]          # one value or a list; a list also writes a side-by-side sweep
 test_text_prompt:          # language: the prompt
-text_encoder_ckpt: ckpts/mlp_encoder.pth   # language: BERT -> latent projector weights
+text_encoder_ckpt:         # language: BERT -> latent projector weights;
+                          # empty = <save_path>/<test_stage>/mlp_encoder.pth, where
+                          # data_generation/train_text_projector.py writes it
 bert_cache_dir:            # language: HuggingFace cache folder for bert-base-cased
 test_motion_data:          # fit_motion / fit_unaligned_motion: folder with view_XX/FF.png of the new motion
 fit_steps: 1000

@@ -29,7 +29,7 @@ from tensorboardX import SummaryWriter
 from dimo.cameras import OrbitIntrinsics
 from dimo.data import SceneInfo, frame_path, load_motion, parse_video_list, to_float
 from dimo.losses import ssim
-from dimo.models.gaussian_model import STAGE_1, STAGE_2
+from dimo.models.gaussian_model import STAGE_1, STAGE_2, TEXT_PROJECTOR_NAME
 from dimo.models.renderer import Renderer
 from dimo.models.text_encoder import MLPEncoder, encode_text
 from dimo.trainer import resolution_for_step
@@ -269,20 +269,23 @@ class Tester:
         if not prompt:
             raise ValueError("`test_text_prompt` must be set for the language mode")
         print(f"[INFO] text prompt: {prompt!r}")
-        # The released checkpoint does not ship a projector, so say how to get one rather than
-        # letting torch.load raise a bare FileNotFoundError.
-        if not opt.text_encoder_ckpt or not os.path.exists(opt.text_encoder_ckpt):
+        # Defaults to where train_text_projector.py writes it, so the mode works straight after
+        # training without having to repeat the path.
+        ckpt = opt.text_encoder_ckpt or os.path.join(opt.save_path, self.stage, TEXT_PROJECTOR_NAME)
+        if not os.path.exists(ckpt):
             raise FileNotFoundError(
-                f"no text projector at {opt.text_encoder_ckpt!r}. This mode needs one trained for "
-                f"this model; the released checkpoint does not include it. Train it with:\n"
+                f"no text projector at {ckpt}. This mode needs one trained for this model, and the "
+                f"released checkpoint does not include it. Train it with:\n"
                 f"    python data_generation/train_text_projector.py --config data_generation/configs/default.yaml \\\n"
-                f"        object.name=<dataset folder name> dataset.output_dir=<parent of it> \\\n"
-                f"        projector.checkpoint_dir={os.path.join(opt.save_path, STAGE_2)}\n"
-                f"then pass text_encoder_ckpt=<the .pth it writes>. The dataset needs a captions.json; "
-                f"data_generation/caption_dataset.py writes one for datasets that lack it.")
+                f"        object.name={os.path.basename(os.path.normpath(opt.input_folder))} "
+                f"dataset.output_dir={os.path.dirname(os.path.normpath(opt.input_folder)) or '.'} \\\n"
+                f"        projector.checkpoint_dir={os.path.join(opt.save_path, self.stage)}\n"
+                f"which writes {os.path.join(opt.save_path, self.stage, TEXT_PROJECTOR_NAME)}, the "
+                f"location this mode uses when `text_encoder_ckpt` is left empty. The dataset needs a "
+                f"captions.json; data_generation/caption_dataset.py writes one for datasets that lack it.")
         projector = MLPEncoder(output_size=opt.latent_code_dim).to(self.device).eval()
-        projector.load_state_dict(torch.load(opt.text_encoder_ckpt, map_location=self.device))
-        print(f"[INFO] loaded text projector from {opt.text_encoder_ckpt}")
+        projector.load_state_dict(torch.load(ckpt, map_location=self.device))
+        print(f"[INFO] loaded text projector from {ckpt}")
         with torch.no_grad():
             code = projector(encode_text([prompt], cache_dir=opt.bert_cache_dir).to(self.device))
 

@@ -134,15 +134,18 @@ https://github.com/user-attachments/assets/1d2d1173-cfbd-420d-96fb-eb806ab62c33
 
 - Language-Guided Motion Generation
 
-`mode=language test_text_prompt="Trump is walking" text_encoder_ckpt=<projector.pth>`
+`mode=language test_text_prompt="Trump is walking"`
 
-Maps a phrase to a latent code with a small BERT-to-latent projector. **The released checkpoint does not include a projector**, so train one first — it takes a couple of minutes on CPU:
+Maps a phrase to a latent code with a small BERT-to-latent projector. **The released checkpoint does not include a projector**, so train one first — a couple of minutes on CPU:
 ```bash
+python data_generation/caption_dataset.py dataset_dir=data/trump_n51_step20        # only if captions.json is missing
 python data_generation/train_text_projector.py --config data_generation/configs/default.yaml \
     object.name=trump_n51_step20 dataset.output_dir=data \
     projector.checkpoint_dir=ckpts/trump_n51_step20/s2
 ```
-To train the projector for your own object, run the same script against your trained checkpoint; it pairs each motion's short phrase from `captions.json` with that motion's latent code, using the `motion_order.json` the training run wrote so the pairing cannot silently shift. A dataset that arrived without captions (such as the released Trump data) can be captioned first with `data_generation/caption_dataset.py dataset_dir=data/trump_n51_step20`, which shows a strip of frames per motion to a vision-language model and writes the `captions.json` the projector needs.
+That writes `ckpts/trump_n51_step20/s2/mlp_encoder.pth`, which is exactly where `mode=language` looks by default (`<save_path>/<test_stage>/mlp_encoder.pth`), so no extra argument is needed; set `text_encoder_ckpt=` to point elsewhere.
+
+The projector pairs each motion's short phrase from `captions.json` with that motion's latent code, using the `motion_order.json` the training run wrote so the pairing cannot silently shift. The first command above captions a dataset that arrived without them (such as the released Trump data) by showing a strip of frames per motion to a vision-language model.
 
 https://github.com/user-attachments/assets/9cbadd77-2b39-48b9-b73d-4d71fcf5b2fb
 
@@ -166,6 +169,10 @@ The losses, schedules, deformation math and checkpoint format are unchanged: the
 
 Cached ground-truth frames and masks are stored as `uint8` rather than `float32`, which is what lets the 51 x 9 x 21 released dataset stay in host memory; the resulting per-pixel error on the loss targets is at most 1/510.
 </details>
+
+### 📄 License
+
+The code in this repository is released under the [MIT License](LICENSE). Note that the Gaussian rasterizers in `submodules/` derive from [gaussian-splatting](https://github.com/graphdeco-inria/gaussian-splatting), which Inria and MPII license for **non-commercial research and evaluation only**, and that the video and matting models each carry their own terms. See [LICENSE](LICENSE) for the full list and check them before any commercial use.
 
 ### 🌸 Acknowledgement
 Our code is built on top of [DreamGaussian](https://github.com/dreamgaussian/dreamgaussian), [CogVideoX](https://github.com/zai-org/CogVideo), [SV4D](https://github.com/Stability-AI/generative-models). Many thanks to the authors for sharing their code. We also greatly appreciate the help from [Yiming Xie](https://ymingxie.github.io/).

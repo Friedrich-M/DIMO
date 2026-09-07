@@ -36,6 +36,7 @@ from dimo.utils.sh import RGB2SH
 STAGE_1, STAGE_2 = "s1", "s2"
 PLY_NAME, KEY_POINT_PLY_NAME, DEFORM_NET_NAME = "point_cloud.ply", "point_cloud_c.ply", "timenet.pth"
 MOTION_ORDER_NAME = "motion_order.json"
+TEXT_PROJECTOR_NAME = "mlp_encoder.pth"
 
 
 def mean_knn_sq_distance(points: torch.Tensor, k: int = 3) -> torch.Tensor:

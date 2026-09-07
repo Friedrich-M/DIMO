@@ -1,0 +1,42 @@
+MIT License
+
+Copyright (c) 2025 The DIMO Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Third-party components
+
+This licence covers the code in this repository only. Running it requires
+components distributed under their own terms, which are not granted here and
+are in some cases more restrictive:
+
+  * submodules/diff-gauss and submodules/diff-gaussian-rasterization derive
+    from gaussian-splatting, licensed by Inria and the Max Planck Institut
+    fuer Informatik for **non-commercial research and evaluation only**.
+    Because DIMO renders through these rasterizers, that restriction applies
+    in practice to the pipeline as a whole.
+  * Wan2.2 and CogVideoX are Apache-2.0.
+  * SV4D / SV3D code is MIT; their model weights are covered separately by the
+    Stability AI Community Licence.
+  * Model weights obtained from third parties (Wan2.2, CogVideoX, SV4D, BERT,
+    u2net, RAFT) remain under the licences of their respective providers.
+
+Check each component's licence before any commercial use.
