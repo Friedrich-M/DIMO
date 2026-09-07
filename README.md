@@ -80,9 +80,15 @@ You can skip this step and download our processed example data (51 Trump motions
 ```bash
 mkdir data && cd data && gdown 1b0_2t_KKhOyKlJsYncUcQm6URecAS6M6 && tar -zxvf data_trump_n51_step20.tar.gz && cd ..
 ```
-A data folder contains one sub-folder per motion with `view_XX/FF.png` frames, plus an optional `info.json` listing the view azimuths and the motion names. Foreground masks are computed on first use and cached next to the frames as `FF_mask.npy`, so only the first run pays for them; the loader spreads the work over `num_workers` processes.
+A data folder contains one sub-folder per motion with `view_XX/FF.png` frames, plus an optional `info.json` listing the view azimuths and the motion names.
+
+<details>
+<summary>Foreground masks, and how to make them 30x faster</summary>
+
+Masks are computed on first use and cached next to the frames as `FF_mask.npy`, so only the first run pays for them; the loader spreads the work over `num_workers` processes.
 
 `mask_method` chooses how. The default `rembg` runs the u2net matting network, which is general but costs about 0.2 s per frame — roughly 27 minutes for a 51 x 9 x 21 dataset on one core, or under 2 minutes on 16. Since every frame this pipeline produces sits on a pure white background, `mask_method=white_bg` instead derives the alpha from the distance to white, which is **about 30x faster** (a full dataset in under a minute on one core) and keeps white parts of the object, because it only removes white that is connected to the image border. It agrees with `rembg` to a median IoU of 0.97; the difference is at soft edges, where `white_bg` keeps a slightly wider matte. Use it for renders on white, and keep `rembg` for photographs or any other background. If you precompute masks with `data_generation/build_dataset.py`, set the matching `dataset.mask_method` there so the cached masks are the ones training would have produced.
+</details>
 
 ### 🚀 Training
 Intuition: jointly model diverse 3D motions in a shared latent space. To train DIMO, simply run:
