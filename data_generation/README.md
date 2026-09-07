@@ -8,7 +8,7 @@ This folder distills the training data DIMO needs from a **single image** of an 
 | 2 | `generate_videos.py` | [Wan2.2](https://github.com/Wan-Video/Wan2.2) TI2V-5B (default) or [CogVideoX](https://github.com/zai-org/CogVideo)-5B-I2V | One image-to-video clip per caption, all starting from the same reference frame. |
 | 3 | `filter_videos.py` | RAFT optical flow (+ optional VLM judge) | Extracts `clips.num_frames` (41 by default) object-centred RGBA frames per clip, removes clips with too little / too much motion and, optionally, low visual quality, identity drift or prompt mismatch. |
 | 4 | `generate_multiview.py` | [SV4D 2.0](https://github.com/Stability-AI/generative-models) (default) or SV4D 1.0 | 8 novel views x 41 frames per accepted clip (view 0 = input), written directly as `view_XX/FF.png`. |
-| 5 | `build_dataset.py` | rembg | Assembles `<motion>/view_XX/FF.png`, `FF_mask.npy`, `info.json` and `captions.json` for `train.py`. |
+| 5 | `build_dataset.py` | rembg or a white-background matte | Assembles `<motion>/view_XX/FF.png`, `FF_mask.npy`, `info.json` and `captions.json` for `train.py`. |
 | 6 | `train_text_projector.py` (optional) | BERT | Trains the text -> latent projector (`mlp_encoder.pth`) for `test.py mode=language` from a trained DIMO model. |
 
 Every stage is resumable: existing outputs are skipped unless `force=True`, and stages can be re-run after adding motions. All options live in `configs/default.yaml` and are overridden as `section.key=value` on the command line. Intermediate results are stored under `<workdir>/<object.name>/`:
@@ -19,7 +19,7 @@ work/<object>/
   description.json                     structured object description
   motions.json                         motion captions: name, motion_type, short phrase, caption
   videos/<motion>.mp4 (+ .json)        Wan2.2 clips (raw outputs under videos/raw/)
-  clips/<motion>/FF.png                21 RGBA frames per clip, 576x576
+  clips/<motion>/FF.png                `clips.num_frames` RGBA frames per clip, 576x576
   filter_report.json                   motion scores, judge scores, accepted / rejected
   multiview/<model>/<motion>/view_XX/FF.png   SV4D output (per model, so layouts cannot be mixed);
                                               multiview/<model>/info.json holds the camera layout
@@ -36,7 +36,7 @@ Most stages run in the **`dimo`** training environment from the main README, plu
 | `sv4d` | 4 | SV4D needs its own torch and xformers |
 | `datagen` | 1 (optional) | only for `llm.backend=local`: Qwen3.5 needs a transformers release newer than dimo's pinned 4.33 |
 
-Neither extra environment is needed for the default caption path, which reaches GPT-5 over the API from the `dimo` environment. `bash scripts/setup_envs.sh all` creates the required two; add `bash scripts/setup_envs.sh captioner` for the optional `datagen` one (the selector is `captioner`, the environment it creates is named `datagen`). All are pinned to the versions this pipeline was tested against. The `sv4d.python` and `wan.python` config keys point the pipeline at those interpreters, so you never have to switch environments by hand.
+None of the extra environments is needed for the default caption path, which reaches GPT-5 over the API from the `dimo` environment. `bash scripts/setup_envs.sh all` creates the required two; add `bash scripts/setup_envs.sh captioner` for the optional `datagen` one (the selector is `captioner`, the environment it creates is named `datagen`). All are pinned to the versions this pipeline was tested against. The `sv4d.python` and `wan.python` config keys point the pipeline at those interpreters, so you never have to switch environments by hand.
 
 On a cluster whose compute nodes have no network access, warm the caches once from a login node (the setup script does this for the environments it creates):
 ```bash
@@ -45,7 +45,9 @@ python -c "from torchvision.models.optical_flow import raft_small, Raft_Small_We
 python -c "import lpips; lpips.LPIPS(net='vgg')"                     # used by train.py / test.py
 python -c "from transformers import AutoModel, AutoTokenizer; [c.from_pretrained('bert-base-cased', cache_dir='../ckpts/hf_cache') for c in (AutoTokenizer, AutoModel)]"
 ```
-Pass `projector.bert_cache_dir=ckpts/hf_cache` to `train_text_projector.py` (and `bert_cache_dir=` to `test.py mode=language`) so stage 6 reads BERT from that cache instead of trying to download it, and export `HF_HUB_OFFLINE=1` so transformers does not spend half a minute retrying the hub before falling back to the cache. Stage 5 precomputes the `FF_mask.npy` masks so training never has to. `dataset.mask_method=white_bg` derives them from the distance to white instead of running the matting network, which is about 30x faster and exact for these renders (they are all on a pure white background); it must match `mask_method` in the DIMO training config so a mask computed here and one computed at training time agree. The matting model is pinned to `u2net` (recent rembg releases changed the default); override it with `$DIMO_REMBG_MODEL` in both this pipeline and `dimo`.
+Pass `projector.bert_cache_dir=ckpts/hf_cache` to `train_text_projector.py` (and `bert_cache_dir=` to `test.py mode=language`) so stage 6 reads BERT from that cache instead of trying to download it, and export `HF_HUB_OFFLINE=1` so transformers does not spend half a minute retrying the hub before falling back to the cache.
+
+Stage 5 precomputes the `FF_mask.npy` masks so training never has to. `dataset.mask_method=white_bg` derives them from the distance to white instead of running the matting network, which is about 30x faster and exact for these renders, since they all sit on a pure white background; it must match `mask_method` in the DIMO training config, so that a mask cached here and one computed at training time agree. The matting model is pinned to `u2net` (recent rembg releases changed the default); override it with `$DIMO_REMBG_MODEL` in both this pipeline and `dimo`.
 
 ### Video models (stage 2)
 

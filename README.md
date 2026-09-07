@@ -48,15 +48,17 @@ Then pass `bert_cache_dir=ckpts/hf_cache` to `test.py mode=language` and `projec
 ### 🗂️ Code Structure
 ```
 train.py / test.py        entry points (config = configs/default.yaml + key=value overrides)
-configs/default.yaml      every option, documented
+configs/default.yaml      every option, grouped by stage and commented
 scripts/                  example train / test commands
 dimo/
-  data.py                 multi-view video loading, mask caching (rembg)
+  config.py               YAML + `key=value` overrides (unknown keys are rejected)
+  data.py                 multi-view video loading, mask caching (rembg / white background)
   cameras.py              orbit cameras and the rasterizer camera
   trainer.py              two-stage training loop
   tester.py               rendering, trajectories and the latent-space applications
   models/
     deform_net.py         latent-conditioned motion decoder (position + rotation)
+    embedding.py          positional encoding for the decoder inputs
     latent.py             per-motion latent codes (plain or Gaussian / VAE)
     gaussian_model.py     canonical Gaussians, key points, densification, checkpoints
     renderer.py           stage-1 / stage-2 deformation and rasterisation
@@ -80,7 +82,7 @@ You can skip this step and download our processed example data (51 Trump motions
 ```bash
 mkdir data && cd data && gdown 1b0_2t_KKhOyKlJsYncUcQm6URecAS6M6 && tar -zxvf data_trump_n51_step20.tar.gz && cd ..
 ```
-A data folder contains one sub-folder per motion with `view_XX/FF.png` frames, plus an optional `info.json` listing the view azimuths and the motion names.
+A data folder contains one sub-folder per motion with `view_XX/FF.png` frames, plus an `info.json` listing the view azimuths, elevations and motion names. `info.json` may be omitted if you pass `input_videos=<comma-separated motions>` and the config's `num_views` / `num_frames` match the folder, in which case the azimuths are assumed uniform; the datasets built by `data_generation/` always include it.
 
 <details>
 <summary>Foreground masks, and how to make them 30x faster</summary>

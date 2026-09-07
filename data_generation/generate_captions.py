@@ -55,7 +55,8 @@ def main():
         motions = [motions[i] for i in keep]
         print(f"[INFO] kept {len(motions)} motions after clustering in BERT space")
 
-    summaries = summarize_motions(client, [m["caption"] for m in motions])
+    summaries = summarize_motions(client, [m["caption"] for m in motions],
+                                  fallbacks=[m["motion_type"] for m in motions])
     records = build_motion_records(motions, summaries)
     write_json(motions_path, {"object": cfg.object.name, "reference_image": os.path.abspath(cfg.object.image),
                               "template": template, "motions": records})

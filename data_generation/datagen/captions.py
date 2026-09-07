@@ -1,7 +1,7 @@
 """Stage 1: structured object description and diverse motion captions from one reference image."""
 
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from PIL import Image
 
@@ -86,17 +86,51 @@ def generate_motion_captions(client: ChatClient, image: Image.Image, template: s
     return motions
 
 
-def summarize_motions(client: ChatClient, captions: List[str], chunk: int = 25) -> List[str]:
-    """Short imperative phrases (e.g. "lift the right hand") used for language-guided generation."""
+def _as_phrase(value) -> str:
+    """One short phrase from whatever the summariser returned for an item."""
+    if isinstance(value, dict):  # some models wrap each phrase in an object
+        for key in ("short", "summary", "motion_type", "phrase", "text"):
+            if isinstance(value.get(key), str):
+                value = value[key]
+                break
+        else:
+            value = next((v for v in value.values() if isinstance(v, str)), "")
+    return str(value).strip().strip('"').rstrip(".")
+
+
+def summarize_motions(client: ChatClient, captions: List[str], fallbacks: Optional[List[str]] = None,
+                      chunk: int = 25, retries: int = 2) -> List[str]:
+    """Short imperative phrases (e.g. "lift the right hand") used for language-guided generation.
+
+    This runs after every caption has been generated, so a hard failure here would throw away the
+    whole stage. A chunk whose length comes back wrong is retried, and if it still does not line up
+    the motions' own ``motion_type`` is used, which the caption prompt already constrains to a short
+    imperative phrase of 3-6 words. Losing the polish is much better than losing the run.
+    """
     summaries: List[str] = []
     for start in range(0, len(captions), chunk):
         block = captions[start:start + chunk]
         text = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(block))
-        result = client.chat_json([{"role": "system", "content": SHORT_SUMMARY_SYSTEM}, {"role": "user", "content": text}], temperature=0.2)
-        result = result if isinstance(result, list) else [result]
-        if len(result) != len(block):
-            raise RuntimeError(f"expected {len(block)} summaries, got {len(result)}")
-        summaries += [str(s).strip().rstrip(".") for s in result]
+        messages = [{"role": "system", "content": SHORT_SUMMARY_SYSTEM}, {"role": "user", "content": text}]
+        result = None
+        for attempt in range(retries + 1):
+            try:
+                candidate = client.chat_json(messages, temperature=0.2)
+            except RuntimeError as e:
+                print(f"[WARN] summary request failed ({e})")
+                continue
+            candidate = candidate if isinstance(candidate, list) else [candidate]
+            if len(candidate) == len(block):
+                result = candidate
+                break
+            print(f"[WARN] expected {len(block)} summaries, got {len(candidate)}"
+                  + ("; retrying" if attempt < retries else ""))
+        if result is None:
+            spare = (fallbacks or captions)[start:start + chunk]
+            print(f"[WARN] falling back to the motion phrases for {len(block)} caption(s)")
+            summaries += [_as_phrase(s) for s in spare]
+            continue
+        summaries += [_as_phrase(s) for s in result]
     return summaries
 
 
